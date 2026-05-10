@@ -1,0 +1,839 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>铺图 PuTu — AI 跨境铺货素材生成器(原型)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+  body { font-family: ui-sans-serif, system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; }
+  .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
+  .scrollbar-thin::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+  @keyframes shimmer { 0% { background-position: -800px 0 } 100% { background-position: 800px 0 } }
+  .shimmer { background: linear-gradient(to right, #f3f4f6 4%, #e5e7eb 25%, #f3f4f6 36%); background-size: 800px 100%; animation: shimmer 1.4s infinite linear; }
+  .fade-in { animation: fadeIn .3s ease-out; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px) } to { opacity: 1; transform: translateY(0) } }
+</style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+<div id="root"></div>
+
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useRef, useMemo } = React;
+
+// ============== Mock Data ==============
+const MARKETS = [
+  { code: 'RU', flag: '🇷🇺', name: '俄罗斯', platforms: ['速卖通', 'Wildberries'], lang: 'ru', model: '斯拉夫女模', sceneHints: ['冬季雪地', '暖气房', '城市街景'] },
+  { code: 'BR', flag: '🇧🇷', name: '巴西', platforms: ['速卖通', 'MercadoLibre'], lang: 'pt', model: '拉美女模', sceneHints: ['海滩', '热带街景', '里约风光'] },
+  { code: 'ES', flag: '🇪🇸', name: '西班牙', platforms: ['速卖通', 'Amazon ES'], lang: 'es', model: '欧洲女模', sceneHints: ['地中海风格', '欧式咖啡馆'] },
+  { code: 'AE', flag: '🇦🇪', name: '中东', platforms: ['Noon', 'Amazon AE'], lang: 'ar', model: '阿拉伯女模(头巾选项)', sceneHints: ['现代都市', '室内典雅'] },
+  { code: 'ID', flag: '🇮🇩', name: '印尼', platforms: ['Shopee', 'Lazada', 'Tokopedia'], lang: 'id', model: '东南亚女模', sceneHints: ['热带雨林', '岛屿沙滩', '本土市集'] },
+  { code: 'US', flag: '🇺🇸', name: '美国', platforms: ['Amazon', 'TikTok Shop'], lang: 'en', model: '北美女模', sceneHints: ['白底专业', '居家温馨', '健身房'] }
+];
+
+const SCENES = [
+  { id: 'white', name: '白底专业', desc: 'Amazon 主图标准' },
+  { id: 'home', name: '居家温馨', desc: '客厅/卧室' },
+  { id: 'street', name: '户外街拍', desc: '都市街景' },
+  { id: 'beach', name: '海滩度假', desc: '热带阳光' },
+  { id: 'studio', name: '工作室棚拍', desc: '高级感' },
+  { id: 'gym', name: '健身房', desc: '运动场景' }
+];
+
+const PLATFORMS = [
+  { id: 'aliexpress', name: '速卖通', size: '800×800', desc: '主图 + 6 副图' },
+  { id: 'temu', name: 'Temu', size: '1200×1200', desc: '正方形' },
+  { id: 'shein', name: 'SHEIN', size: '1080×1440', desc: '3:4 竖图' },
+  { id: 'lazada', name: 'Lazada', size: '1500×1500', desc: '正方形' },
+  { id: 'shopee', name: 'Shopee', size: '1024×1024', desc: '正方形' },
+  { id: 'amazon', name: 'Amazon', size: '2000×2000', desc: '高清主图' }
+];
+
+const CATEGORIES = [
+  { id: 'apparel', name: '服装鞋帽', icon: '👚' },
+  { id: 'electronics', name: '数码 3C', icon: '📱' },
+  { id: 'home', name: '家居日用', icon: '🏠' },
+  { id: 'beauty', name: '美妆个护', icon: '💄' },
+  { id: 'sports', name: '运动户外', icon: '⚽' },
+  { id: 'kids', name: '母婴儿童', icon: '🧸' },
+  { id: 'auto', name: '汽配工具', icon: '🔧' },
+  { id: 'pet', name: '宠物用品', icon: '🐾' }
+];
+
+// 多语言文案 mock
+const MOCK_COPY = {
+  ru: {
+    title: 'Премиум хлопковая футболка - Бесплатная доставка из Китая, 7-15 дней',
+    desc: '100% органический хлопок · Мягкая как облако · 5 размеров (S-XXL) · 12 цветов\nИдеальна для повседневной носки. Дышащая ткань, не садится после стирки.',
+    keywords: 'мужская футболка, хлопок, премиум, бесплатная доставка, базовая футболка'
+  },
+  pt: {
+    title: 'Camiseta de Algodão Premium - Frete Grátis · Entrega 12-20 dias',
+    desc: '100% algodão orgânico · Macia como nuvem · 5 tamanhos (S-XXL) · 12 cores\nPerfeita para uso diário. Tecido respirável, não encolhe na lavagem.',
+    keywords: 'camiseta masculina, algodão, premium, frete grátis, básica'
+  },
+  es: {
+    title: 'Camiseta de Algodón Premium - Envío Gratis · Suave como Nube',
+    desc: '100% algodón orgánico · Suave como nube · 5 tallas (S-XXL) · 12 colores\nPerfecta para uso diario. Tejido transpirable, no encoge.',
+    keywords: 'camiseta hombre, algodón, premium, envío gratis, básica'
+  },
+  ar: {
+    title: 'قميص قطني فاخر - شحن مجاني · ناعم كالسحاب',
+    desc: '١٠٠٪؜ قطن عضوي · ناعم كالسحاب · ٥ مقاسات · ١٢ لون\nمثالي للارتداء اليومي. قماش يسمح بمرور الهواء.',
+    keywords: 'قميص رجالي، قطن، فاخر، شحن مجاني'
+  },
+  id: {
+    title: 'Kaos Katun Premium - Gratis Ongkir · Selembut Awan',
+    desc: '100% katun organik · Selembut awan · 5 ukuran (S-XXL) · 12 warna\nSempurna untuk pemakaian sehari-hari. Bahan adem, tidak menyusut.',
+    keywords: 'kaos pria, katun, premium, gratis ongkir, basic'
+  },
+  en: {
+    title: 'Premium Cotton T-Shirt - Free Shipping · Cloud-Soft Touch',
+    desc: '100% organic cotton · Cloud-soft · 5 sizes (S-XXL) · 12 colors\nPerfect for daily wear. Breathable, won\'t shrink after wash.',
+    keywords: 'mens tshirt, cotton, premium, free shipping, basic tee'
+  }
+};
+
+// ============== Helpers ==============
+const placeholderImg = (seed, w = 600, h = 600) => `https://picsum.photos/seed/${encodeURIComponent(seed)}/${w}/${h}`;
+const cls = (...args) => args.filter(Boolean).join(' ');
+
+// ============== Components ==============
+
+function NavBar({ page, setPage, credits }) {
+  const items = [
+    { id: 'console', name: '控制台' },
+    { id: 'history', name: '历史' },
+    { id: 'pricing', name: '定价' }
+  ];
+  return (
+    <nav className="bg-white border-b border-slate-200 sticky top-0 z-30">
+      <div className="max-w-7xl mx-auto px-6 h-14 flex items-center gap-8">
+        <div className="flex items-center gap-2 cursor-pointer" onClick={() => setPage('console')}>
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm">铺</div>
+          <span className="font-semibold">铺图 PuTu</span>
+          <span className="text-xs text-slate-400 ml-1">原型 v0.1</span>
+        </div>
+        <div className="flex items-center gap-1">
+          {items.map(it => (
+            <button
+              key={it.id}
+              onClick={() => setPage(it.id)}
+              className={cls(
+                'px-3 py-1.5 text-sm rounded-md transition',
+                page === it.id ? 'bg-indigo-50 text-indigo-700 font-medium' : 'text-slate-600 hover:bg-slate-100'
+              )}>{it.name}</button>
+          ))}
+        </div>
+        <div className="ml-auto flex items-center gap-3">
+          <div className="text-xs text-slate-500">
+            <span className="text-slate-700 font-medium">{credits}</span> credits
+          </div>
+          <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-xs font-medium">U</div>
+        </div>
+      </div>
+    </nav>
+  );
+}
+
+function Section({ title, hint, children }) {
+  return (
+    <div className="mb-6">
+      <div className="flex items-baseline gap-2 mb-2.5">
+        <h3 className="font-medium text-sm text-slate-700">{title}</h3>
+        {hint && <span className="text-xs text-slate-400">{hint}</span>}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function Chip({ active, onClick, children, dim }) {
+  return (
+    <button
+      onClick={onClick}
+      className={cls(
+        'px-3 py-1.5 rounded-md text-sm border transition',
+        active
+          ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+          : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300',
+        dim && 'opacity-50'
+      )}>
+      {children}
+    </button>
+  );
+}
+
+// ============== Page: Console ==============
+
+function ConsolePage({ onGenerate, savedConfig, setSavedConfig }) {
+  const [uploadedImg, setUploadedImg] = useState(savedConfig.uploadedImg || null);
+  const [category, setCategory] = useState(savedConfig.category || 'apparel');
+  const [markets, setMarkets] = useState(savedConfig.markets || ['RU', 'BR', 'US']);
+  const [useModel, setUseModel] = useState(savedConfig.useModel ?? true);
+  const [hijab, setHijab] = useState(false);
+  const [scenes, setScenes] = useState(savedConfig.scenes || ['white', 'home', 'street']);
+  const [platforms, setPlatforms] = useState(savedConfig.platforms || ['aliexpress', 'temu', 'amazon']);
+  const [count, setCount] = useState(savedConfig.count || 30);
+  const [productName, setProductName] = useState(savedConfig.productName || '纯棉短袖 T 恤');
+
+  const fileRef = useRef();
+
+  const onFile = (e) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    const url = URL.createObjectURL(f);
+    setUploadedImg(url);
+  };
+
+  const totalCredits = useMemo(() => {
+    const perImage = 1; // 1 credit / image
+    return markets.length * scenes.length * Math.ceil(count / Math.max(markets.length * scenes.length, 1)) * perImage;
+  }, [markets, scenes, count]);
+
+  const canGenerate = uploadedImg && markets.length > 0 && scenes.length > 0 && platforms.length > 0;
+
+  const toggle = (arr, val) =>
+    arr.includes(val) ? arr.filter(x => x !== val) : [...arr, val];
+
+  const start = () => {
+    const config = { uploadedImg, category, markets, useModel, hijab, scenes, platforms, count, productName };
+    setSavedConfig(config);
+    onGenerate(config);
+  };
+
+  return (
+    <div className="max-w-7xl mx-auto px-6 py-6 grid grid-cols-12 gap-6">
+      {/* 左:配置 */}
+      <div className="col-span-12 lg:col-span-8 space-y-5">
+        <div className="bg-white border border-slate-200 rounded-xl p-6">
+          <h2 className="text-lg font-semibold mb-1">新建生成任务</h2>
+          <p className="text-sm text-slate-500 mb-5">上传一个产品图,一次输出多市场、多场景、多语言素材</p>
+
+          <Section title="① 上传产品图" hint="支持白底图、电商抠图、原图">
+            {!uploadedImg ? (
+              <button
+                onClick={() => fileRef.current.click()}
+                className="w-full border-2 border-dashed border-slate-300 rounded-lg py-12 flex flex-col items-center gap-2 hover:border-indigo-400 hover:bg-indigo-50/30 transition">
+                <div className="text-3xl">📤</div>
+                <div className="text-sm text-slate-600">点击或拖拽上传</div>
+                <div className="text-xs text-slate-400">建议 1000×1000 以上,JPG/PNG</div>
+              </button>
+            ) : (
+              <div className="flex gap-4 items-center">
+                <img src={uploadedImg} alt="" className="w-24 h-24 object-cover rounded-lg border border-slate-200" />
+                <div className="flex-1">
+                  <div className="text-sm font-medium">已上传</div>
+                  <div className="text-xs text-slate-500 mt-0.5">系统会自动抠图、检测主体</div>
+                </div>
+                <button
+                  onClick={() => { setUploadedImg(null); fileRef.current.value = ''; }}
+                  className="text-xs text-slate-500 hover:text-rose-600">移除</button>
+              </div>
+            )}
+            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onFile} />
+            <div className="mt-2 text-xs text-slate-400">
+              没有图? <button onClick={() => setUploadedImg(placeholderImg('demo-shirt', 800, 800))} className="text-indigo-600 hover:underline">用一张演示图</button>
+            </div>
+          </Section>
+
+          <Section title="② 商品名 & 类目" hint="决定文案语气和模特风格">
+            <div className="flex gap-3">
+              <input
+                value={productName}
+                onChange={e => setProductName(e.target.value)}
+                placeholder="例如 纯棉短袖 T 恤"
+                className="flex-1 px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-500" />
+            </div>
+            <div className="flex flex-wrap gap-2 mt-3">
+              {CATEGORIES.map(c => (
+                <Chip key={c.id} active={category === c.id} onClick={() => setCategory(c.id)}>
+                  <span className="mr-1">{c.icon}</span>{c.name}
+                </Chip>
+              ))}
+            </div>
+          </Section>
+
+          <Section title="③ 目标市场" hint="自动适配模特、文案、场景">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+              {MARKETS.map(m => {
+                const active = markets.includes(m.code);
+                return (
+                  <button
+                    key={m.code}
+                    onClick={() => setMarkets(toggle(markets, m.code))}
+                    className={cls(
+                      'p-3 rounded-lg border text-left transition',
+                      active ? 'border-indigo-500 bg-indigo-50/50' : 'border-slate-200 bg-white hover:border-slate-300'
+                    )}>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xl">{m.flag}</span>
+                      <span className="font-medium text-sm">{m.name}</span>
+                      {active && <span className="ml-auto text-indigo-600 text-xs">✓</span>}
+                    </div>
+                    <div className="text-xs text-slate-500 leading-relaxed">
+                      <div>模特: {m.model}</div>
+                      <div>平台: {m.platforms.join('、')}</div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </Section>
+
+          <Section title="④ 模特设置">
+            <div className="flex items-center gap-3 mb-2">
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <input type="checkbox" checked={useModel} onChange={e => setUseModel(e.target.checked)} className="rounded" />
+                启用模特(根据市场自动选择面孔)
+              </label>
+              {markets.includes('AE') && (
+                <label className="flex items-center gap-2 text-sm cursor-pointer text-emerald-700">
+                  <input type="checkbox" checked={hijab} onChange={e => setHijab(e.target.checked)} className="rounded" />
+                  中东市场:头巾合规
+                </label>
+              )}
+            </div>
+            <div className="text-xs text-slate-400">无模特模式输出"产品 + 场景"图,适合数码/家居类目</div>
+          </Section>
+
+          <Section title="⑤ 场景类型" hint="组合策略:每个市场 × 每个场景 = 1 张图">
+            <div className="flex flex-wrap gap-2">
+              {SCENES.map(s => (
+                <Chip key={s.id} active={scenes.includes(s.id)} onClick={() => setScenes(toggle(scenes, s.id))}>
+                  {s.name} <span className="text-xs opacity-60 ml-1">{s.desc}</span>
+                </Chip>
+              ))}
+            </div>
+          </Section>
+
+          <Section title="⑥ 目标平台" hint="自动适配各平台尺寸 / 命名规则">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+              {PLATFORMS.map(p => {
+                const active = platforms.includes(p.id);
+                return (
+                  <button
+                    key={p.id}
+                    onClick={() => setPlatforms(toggle(platforms, p.id))}
+                    className={cls(
+                      'p-2.5 rounded-lg border text-left transition',
+                      active ? 'border-indigo-500 bg-indigo-50/50' : 'border-slate-200 bg-white hover:border-slate-300'
+                    )}>
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium text-sm">{p.name}</span>
+                      {active && <span className="text-indigo-600 text-xs">✓</span>}
+                    </div>
+                    <div className="text-xs text-slate-500 mt-0.5">{p.size} · {p.desc}</div>
+                  </button>
+                );
+              })}
+            </div>
+          </Section>
+
+          <Section title="⑦ 生成数量" hint={`${markets.length} 市场 × ${scenes.length} 场景 = ${markets.length * scenes.length} 张/批`}>
+            <div className="flex items-center gap-4">
+              <input
+                type="range"
+                min={Math.max(markets.length * scenes.length, 1)}
+                max={60}
+                value={count}
+                onChange={e => setCount(parseInt(e.target.value))}
+                className="flex-1" />
+              <div className="text-2xl font-semibold text-indigo-700 w-16 text-right">{count}</div>
+              <div className="text-xs text-slate-500">张</div>
+            </div>
+          </Section>
+        </div>
+      </div>
+
+      {/* 右:摘要 + 提交 */}
+      <div className="col-span-12 lg:col-span-4">
+        <div className="bg-white border border-slate-200 rounded-xl p-5 sticky top-20">
+          <h3 className="font-medium mb-4">任务摘要</h3>
+
+          <div className="space-y-3 text-sm">
+            <div className="flex justify-between">
+              <span className="text-slate-500">商品</span>
+              <span className="font-medium truncate ml-2">{productName || '—'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-500">市场</span>
+              <span className="font-medium">{markets.length} 个</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-500">场景</span>
+              <span className="font-medium">{scenes.length} 个</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-500">平台适配</span>
+              <span className="font-medium">{platforms.length} 个</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-500">图片数</span>
+              <span className="font-medium">{count} 张</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-500">多语言文案</span>
+              <span className="font-medium">{markets.length} 套</span>
+            </div>
+            <hr className="border-slate-100" />
+            <div className="flex justify-between items-baseline">
+              <span className="text-slate-500">预计消耗</span>
+              <span className="font-semibold text-lg text-indigo-700">{count} <span className="text-xs font-normal">credits</span></span>
+            </div>
+          </div>
+
+          <button
+            disabled={!canGenerate}
+            onClick={start}
+            className={cls(
+              'w-full mt-5 py-3 rounded-lg font-medium text-sm transition',
+              canGenerate
+                ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:opacity-90'
+                : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+            )}>
+            {canGenerate ? '🚀 开始生成' : '请上传图并选择市场'}
+          </button>
+
+          <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+            <div className="text-xs text-amber-700 font-medium mb-1">💡 提示</div>
+            <div className="text-xs text-amber-700/90">这是原型,不会真的调用 AI。点击生成后会模拟 8 秒"AI 处理"动画并展示效果图。</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============== Page: Generating ==============
+
+function GeneratingPage({ config, onDone }) {
+  const steps = [
+    { name: '识别产品主体', icon: '🔍', t: 800 },
+    { name: '智能抠图', icon: '✂️', t: 600 },
+    { name: '生成俄罗斯市场素材(斯拉夫女模)', icon: '🇷🇺', t: 1500 },
+    { name: '生成巴西市场素材(拉美女模)', icon: '🇧🇷', t: 1500 },
+    { name: '生成美国市场素材(白底专业图)', icon: '🇺🇸', t: 1200 },
+    { name: '5 国语言文案翻译 + SEO 关键词', icon: '🌐', t: 900 },
+    { name: '适配各平台尺寸(速卖通/Temu/Amazon)', icon: '📐', t: 700 },
+    { name: '打包入库', icon: '📦', t: 400 }
+  ];
+
+  const [idx, setIdx] = useState(0);
+  const [done, setDone] = useState([]);
+
+  useEffect(() => {
+    if (idx >= steps.length) {
+      setTimeout(onDone, 600);
+      return;
+    }
+    const t = setTimeout(() => {
+      setDone(d => [...d, idx]);
+      setIdx(i => i + 1);
+    }, steps[idx].t);
+    return () => clearTimeout(t);
+  }, [idx]);
+
+  const progress = (done.length / steps.length) * 100;
+
+  return (
+    <div className="max-w-3xl mx-auto px-6 py-12">
+      <div className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center text-xl animate-pulse">⚡</div>
+          <div>
+            <h2 className="text-lg font-semibold">正在生成中...</h2>
+            <p className="text-xs text-slate-500">{config.productName} · {config.markets.length} 市场 · {config.count} 张图</p>
+          </div>
+        </div>
+
+        <div className="h-2 bg-slate-100 rounded-full overflow-hidden mb-6">
+          <div className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-500" style={{ width: progress + '%' }} />
+        </div>
+
+        <div className="space-y-2">
+          {steps.map((s, i) => {
+            const isDone = done.includes(i);
+            const isActive = i === idx;
+            return (
+              <div key={i} className={cls(
+                'flex items-center gap-3 p-2.5 rounded-lg transition',
+                isActive && 'bg-indigo-50',
+                isDone && 'opacity-70'
+              )}>
+                <div className="w-7 h-7 flex items-center justify-center text-sm">
+                  {isDone ? <span className="text-emerald-600">✓</span> : isActive ? <span className="animate-spin">⟳</span> : <span className="text-slate-300">○</span>}
+                </div>
+                <div className="text-lg">{s.icon}</div>
+                <div className={cls('text-sm flex-1', isActive ? 'text-slate-900 font-medium' : 'text-slate-600')}>{s.name}</div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============== Page: Result ==============
+
+function ResultPage({ config, onBack, onSave }) {
+  const [tab, setTab] = useState('images');
+
+  // generate mock images grouped by market+scene
+  const groups = useMemo(() => {
+    return config.markets.map(mc => {
+      const m = MARKETS.find(x => x.code === mc);
+      const scenesData = config.scenes.map(sid => {
+        const s = SCENES.find(x => x.id === sid);
+        return {
+          id: `${mc}-${sid}`,
+          scene: s,
+          imgs: config.platforms.slice(0, 2).map((p, i) => ({
+            platform: PLATFORMS.find(x => x.id === p),
+            url: placeholderImg(`${config.productName}-${mc}-${sid}-${i}`, 600, 600)
+          }))
+        };
+      });
+      return { market: m, scenes: scenesData };
+    });
+  }, [config]);
+
+  const totalImgs = groups.reduce((sum, g) => sum + g.scenes.reduce((s, sc) => s + sc.imgs.length, 0), 0);
+
+  return (
+    <div className="max-w-7xl mx-auto px-6 py-6">
+      {/* Header */}
+      <div className="flex items-center gap-4 mb-6">
+        <button onClick={onBack} className="text-slate-500 hover:text-slate-800 text-sm">← 返回控制台</button>
+        <div className="flex-1">
+          <h2 className="text-xl font-semibold">{config.productName} <span className="text-emerald-600 text-sm font-normal ml-2">✓ 生成完成</span></h2>
+          <p className="text-xs text-slate-500 mt-0.5">{totalImgs} 张图 · {config.markets.length} 国语言文案 · 已适配 {config.platforms.length} 个平台</p>
+        </div>
+        <button onClick={onSave} className="px-3 py-1.5 text-sm border border-slate-200 rounded-md hover:bg-slate-50">保存到历史</button>
+        <button className="px-3 py-1.5 text-sm bg-emerald-600 text-white rounded-md hover:bg-emerald-700">📦 打包下载 ZIP</button>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex gap-1 mb-6 border-b border-slate-200">
+        {[
+          { id: 'images', name: '图片素材', count: totalImgs },
+          { id: 'copy', name: '多语言文案', count: config.markets.length },
+          { id: 'keywords', name: 'SEO 关键词', count: config.markets.length },
+          { id: 'platform', name: '按平台分发', count: config.platforms.length }
+        ].map(t => (
+          <button key={t.id} onClick={() => setTab(t.id)}
+            className={cls(
+              'px-4 py-2.5 text-sm border-b-2 -mb-px transition',
+              tab === t.id ? 'border-indigo-600 text-indigo-700 font-medium' : 'border-transparent text-slate-600 hover:text-slate-900'
+            )}>
+            {t.name} <span className="text-xs text-slate-400 ml-1">{t.count}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Tab content */}
+      {tab === 'images' && (
+        <div className="space-y-8 fade-in">
+          {groups.map(g => (
+            <div key={g.market.code}>
+              <div className="flex items-center gap-3 mb-3">
+                <span className="text-2xl">{g.market.flag}</span>
+                <h3 className="font-medium text-lg">{g.market.name}市场</h3>
+                <span className="text-sm text-slate-500">模特: {g.market.model}</span>
+                <button className="ml-auto text-xs text-indigo-600 hover:underline">下载本市场全部 →</button>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                {g.scenes.flatMap(sc => sc.imgs.map((img, i) => (
+                  <div key={`${sc.id}-${i}`} className="group relative bg-slate-100 rounded-lg overflow-hidden aspect-square">
+                    <img src={img.url} className="w-full h-full object-cover" alt="" loading="lazy" />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition flex flex-col justify-end p-2">
+                      <div className="opacity-0 group-hover:opacity-100 transition text-white text-xs font-medium">
+                        {sc.scene.name}
+                      </div>
+                      <div className="opacity-0 group-hover:opacity-100 transition text-white/80 text-[10px]">
+                        {img.platform.name} · {img.platform.size}
+                      </div>
+                    </div>
+                    <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 bg-black/50 text-white text-[10px] rounded">
+                      {sc.scene.name}
+                    </div>
+                  </div>
+                )))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {tab === 'copy' && (
+        <div className="grid md:grid-cols-2 gap-4 fade-in">
+          {config.markets.map(mc => {
+            const m = MARKETS.find(x => x.code === mc);
+            const c = MOCK_COPY[m.lang] || MOCK_COPY.en;
+            return (
+              <div key={mc} className="bg-white border border-slate-200 rounded-xl p-5">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="text-xl">{m.flag}</span>
+                  <span className="font-medium">{m.name}({m.lang.toUpperCase()})</span>
+                  <button className="ml-auto text-xs text-indigo-600 hover:underline">复制</button>
+                </div>
+                <div className="space-y-3 text-sm">
+                  <div>
+                    <div className="text-xs text-slate-400 mb-1">标题</div>
+                    <div className="font-medium" dir={m.lang === 'ar' ? 'rtl' : 'ltr'}>{c.title}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-slate-400 mb-1">描述</div>
+                    <div className="text-slate-700 whitespace-pre-line text-sm" dir={m.lang === 'ar' ? 'rtl' : 'ltr'}>{c.desc}</div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {tab === 'keywords' && (
+        <div className="grid md:grid-cols-2 gap-4 fade-in">
+          {config.markets.map(mc => {
+            const m = MARKETS.find(x => x.code === mc);
+            const c = MOCK_COPY[m.lang] || MOCK_COPY.en;
+            const kws = c.keywords.split(',').map(k => k.trim());
+            return (
+              <div key={mc} className="bg-white border border-slate-200 rounded-xl p-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-xl">{m.flag}</span>
+                  <span className="font-medium">{m.name} · SEO 关键词</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {kws.map((k, i) => (
+                    <span key={i} dir={m.lang === 'ar' ? 'rtl' : 'ltr'} className="px-2.5 py-1 bg-slate-100 rounded-md text-xs">{k}</span>
+                  ))}
+                </div>
+                <div className="mt-3 text-xs text-slate-500">建议把这些词分布到标题、描述、属性里</div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {tab === 'platform' && (
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 fade-in">
+          {config.platforms.map(pid => {
+            const p = PLATFORMS.find(x => x.id === pid);
+            const sample = placeholderImg(`${config.productName}-${pid}`, 400, 400);
+            return (
+              <div key={pid} className="bg-white border border-slate-200 rounded-xl p-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="font-medium">{p.name}</span>
+                  <span className="text-xs text-slate-500">{p.size}</span>
+                  <button className="ml-auto text-xs text-indigo-600 hover:underline">导出 →</button>
+                </div>
+                <img src={sample} className="w-full aspect-square object-cover rounded-lg mb-3" />
+                <div className="text-xs text-slate-500 leading-relaxed">
+                  自动生成 {config.markets.length * config.scenes.length} 张已适配 {p.name}({p.size})尺寸的素材。
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============== Page: History ==============
+
+function HistoryPage({ history, onOpen }) {
+  const items = history.length ? history : Array.from({ length: 4 }).map((_, i) => ({
+    id: 'demo-' + i,
+    productName: ['运动短裤', '蓝牙耳机', '保温水杯', '宠物玩具'][i],
+    markets: ['RU', 'BR', 'US'].slice(0, (i % 3) + 1),
+    count: [12, 24, 18, 30][i],
+    createdAt: new Date(Date.now() - i * 86400000).toLocaleDateString('zh-CN'),
+    cover: placeholderImg(`hist-${i}`, 200, 200)
+  }));
+
+  return (
+    <div className="max-w-7xl mx-auto px-6 py-6">
+      <div className="flex items-baseline gap-3 mb-5">
+        <h2 className="text-xl font-semibold">历史任务</h2>
+        <span className="text-sm text-slate-500">共 {items.length} 个 SKU</span>
+      </div>
+      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+        <table className="w-full">
+          <thead className="bg-slate-50 text-xs text-slate-500">
+            <tr>
+              <th className="text-left p-3 font-medium">封面</th>
+              <th className="text-left p-3 font-medium">商品</th>
+              <th className="text-left p-3 font-medium">市场</th>
+              <th className="text-left p-3 font-medium">图片数</th>
+              <th className="text-left p-3 font-medium">创建时间</th>
+              <th className="text-right p-3 font-medium">操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            {items.map(it => (
+              <tr key={it.id} className="border-t border-slate-100 hover:bg-slate-50/50">
+                <td className="p-3"><img src={it.cover} className="w-10 h-10 rounded object-cover" /></td>
+                <td className="p-3 text-sm font-medium">{it.productName}</td>
+                <td className="p-3 text-sm">
+                  <div className="flex gap-1">
+                    {it.markets.map(mc => <span key={mc}>{MARKETS.find(m => m.code === mc)?.flag}</span>)}
+                  </div>
+                </td>
+                <td className="p-3 text-sm">{it.count}</td>
+                <td className="p-3 text-sm text-slate-500">{it.createdAt}</td>
+                <td className="p-3 text-right">
+                  <button onClick={() => onOpen(it)} className="text-xs text-indigo-600 hover:underline mr-3">查看</button>
+                  <button className="text-xs text-slate-500 hover:underline">复制配置</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// ============== Page: Pricing ==============
+
+function PricingPage() {
+  const tiers = [
+    {
+      name: '新手版',
+      price: 99,
+      tag: '试水',
+      features: ['每月 50 个 SKU', '5 国语言文案', '基础模特库(10 个)', '6 个平台尺寸适配', '社区支持'],
+      cta: '订阅',
+      highlight: false
+    },
+    {
+      name: '成长版',
+      price: 299,
+      tag: '90% 卖家选择',
+      features: ['每月 200 个 SKU', '5 国语言 + 越南语 + 韩语', '完整模特库(50 个)', '所有平台 + 自定义尺寸', '优先生成队列', '邮件 + 微信支持'],
+      cta: '立即订阅',
+      highlight: true
+    },
+    {
+      name: '专业版',
+      price: 599,
+      tag: '团队/代运营',
+      features: ['每月 500 个 SKU', '12 国语言 + 自定义', '解锁高端模特 + 自定义形象', '批量上架 API(beta)', '专属客户经理', '团队 5 人协作'],
+      cta: '订阅',
+      highlight: false
+    }
+  ];
+
+  return (
+    <div className="max-w-7xl mx-auto px-6 py-10">
+      <div className="text-center mb-10">
+        <h2 className="text-3xl font-semibold mb-3">为铺货卖家设计的定价</h2>
+        <p className="text-slate-600">月付随时取消 · 用一次摄影棚的钱解决一年的素材问题</p>
+      </div>
+      <div className="grid md:grid-cols-3 gap-5 max-w-5xl mx-auto">
+        {tiers.map(t => (
+          <div key={t.name} className={cls(
+            'bg-white border rounded-2xl p-7',
+            t.highlight ? 'border-indigo-500 ring-2 ring-indigo-200 relative' : 'border-slate-200'
+          )}>
+            {t.highlight && <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-indigo-600 text-white text-xs rounded-full">{t.tag}</div>}
+            {!t.highlight && <div className="text-xs text-slate-500 mb-2">{t.tag}</div>}
+            <h3 className="text-xl font-semibold mb-1">{t.name}</h3>
+            <div className="flex items-baseline gap-1 mb-5">
+              <span className="text-3xl font-bold">¥{t.price}</span>
+              <span className="text-slate-500 text-sm">/月</span>
+            </div>
+            <ul className="space-y-2.5 text-sm mb-6">
+              {t.features.map((f, i) => (
+                <li key={i} className="flex gap-2"><span className="text-emerald-600">✓</span>{f}</li>
+              ))}
+            </ul>
+            <button className={cls(
+              'w-full py-2.5 rounded-lg font-medium text-sm transition',
+              t.highlight
+                ? 'bg-indigo-600 text-white hover:bg-indigo-700'
+                : 'border border-slate-200 hover:bg-slate-50'
+            )}>{t.cta}</button>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-12 max-w-3xl mx-auto bg-amber-50 border border-amber-200 rounded-xl p-5">
+        <div className="font-medium mb-2">💸 成本对比(同一个 SKU 出 30 张图 + 5 语言文案):</div>
+        <div className="grid grid-cols-3 gap-4 text-sm">
+          <div>
+            <div className="text-slate-500">摄影棚</div>
+            <div className="text-2xl font-semibold text-rose-600 mt-1">¥3000+</div>
+            <div className="text-xs text-slate-500 mt-1">+ 模特费 + P 图费 + 翻译费</div>
+          </div>
+          <div>
+            <div className="text-slate-500">同行工具</div>
+            <div className="text-2xl font-semibold text-amber-600 mt-1">¥800-1500</div>
+            <div className="text-xs text-slate-500 mt-1">英文工具,无多语言适配</div>
+          </div>
+          <div>
+            <div className="text-slate-500">铺图</div>
+            <div className="text-2xl font-semibold text-emerald-600 mt-1">¥30</div>
+            <div className="text-xs text-slate-500 mt-1">成长版人均 SKU 成本</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============== Root ==============
+
+function App() {
+  const [page, setPage] = useState('console'); // console | generating | result | history | pricing
+  const [config, setConfig] = useState({});
+  const [savedConfig, setSavedConfig] = useState({});
+  const [history, setHistory] = useState([]);
+  const [credits, setCredits] = useState(180);
+
+  const goGenerate = (cfg) => {
+    setConfig(cfg);
+    setPage('generating');
+  };
+
+  const onGenerateDone = () => {
+    setCredits(c => Math.max(0, c - (config.count || 0)));
+    setPage('result');
+  };
+
+  const saveToHistory = () => {
+    const item = {
+      id: 't-' + Date.now(),
+      productName: config.productName,
+      markets: config.markets,
+      count: config.count,
+      createdAt: new Date().toLocaleString('zh-CN'),
+      cover: config.uploadedImg || placeholderImg('saved-' + Date.now())
+    };
+    setHistory(h => [item, ...h]);
+    setPage('history');
+  };
+
+  return (
+    <div>
+      <NavBar page={page === 'generating' || page === 'result' ? 'console' : page} setPage={(p) => setPage(p)} credits={credits} />
+      {page === 'console' && <ConsolePage onGenerate={goGenerate} savedConfig={savedConfig} setSavedConfig={setSavedConfig} />}
+      {page === 'generating' && <GeneratingPage config={config} onDone={onGenerateDone} />}
+      {page === 'result' && <ResultPage config={config} onBack={() => setPage('console')} onSave={saveToHistory} />}
+      {page === 'history' && <HistoryPage history={history} onOpen={() => setPage('result')} />}
+      {page === 'pricing' && <PricingPage />}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
