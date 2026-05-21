@@ -2,7 +2,7 @@
 // 启用方法：填入 POSTHOG_KEY 即可（公开 key，可入 git）
 // PostHog 项目地址 https://posthog.com → Project settings → Project API Key
 (function () {
-  window.POSTHOG_KEY = ""; // <-- 在这里填入项目 key（如 'phc_xxxxxxxxxxxxxxxxxxxx'）
+  window.POSTHOG_KEY = "phc_nXLyqZ8aN2qaHxA5xL8qhwdAMeerAeE7cz2CsthqRGoZ"; // <-- 在这里填入项目 key（如 'phc_xxxxxxxxxxxxxxxxxxxx'）
   window.POSTHOG_HOST = "https://us.i.posthog.com";
 
   if (!window.POSTHOG_KEY) {
