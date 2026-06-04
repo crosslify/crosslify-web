@@ -1,23 +1,23 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Crosslify — AI 跨境电商素材生成 · 一图出多市场多平台</title>
-<meta name="description" content="上传一张商品图，60 秒生成 6 国本地化素材：模特图、场景图、多语言文案、多平台尺寸。支持亚马逊、Temu、TikTok Shop、Shopee、Lazada、SHEIN、速卖通。" />
+<title>Crosslify — AI product images and listing content for online sellers</title>
+<meta name="description" content="Upload one product photo and generate localized product images, titles, descriptions, keywords, and marketplace-ready assets for Amazon, TikTok Shop, Etsy, eBay, Shopee, Lazada, Temu, and AliExpress." />
 <link rel="canonical" href="https://crosslify.com/" />
 <meta property="og:type" content="website" />
 <meta property="og:url" content="https://crosslify.com/" />
-<meta property="og:title" content="Crosslify — AI 跨境电商素材生成器" />
-<meta property="og:description" content="一张商品图 → 60 秒出 6 国 × 多平台全套素材：图 + 多语言文案 + 平台尺寸适配。" />
+<meta property="og:title" content="Crosslify — AI product images and listing content" />
+<meta property="og:description" content="Generate localized product images, titles, descriptions, keywords, and marketplace-ready assets from one product photo." />
 <meta property="og:image" content="https://crosslify.com/og.png" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
-<meta property="og:locale" content="zh_CN" />
-<meta property="og:locale:alternate" content="en_US" />
+<meta property="og:locale" content="en_US" />
+<meta property="og:locale:alternate" content="zh_CN" />
 <meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="Crosslify — AI 跨境电商素材生成器" />
-<meta name="twitter:description" content="一张商品图 → 60 秒出 6 国 × 多平台全套素材。" />
+<meta name="twitter:title" content="Crosslify — AI product images and listing content" />
+<meta name="twitter:description" content="Generate localized ecommerce images and listing copy from one product photo." />
 <meta name="twitter:image" content="https://crosslify.com/og.png" />
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' x2='1' y1='0' y2='1'%3E%3Cstop offset='0' stop-color='%236366f1'/%3E%3Cstop offset='1' stop-color='%239333ea'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='7' fill='url(%23g)'/%3E%3Ctext x='16' y='22' font-family='ui-sans-serif,system-ui' font-size='18' font-weight='700' fill='white' text-anchor='middle'%3EC%3C/text%3E%3C/svg%3E" />
 <script type="application/ld+json">
@@ -30,10 +30,10 @@
   "operatingSystem": "Web",
   "applicationCategory": "BusinessApplication",
   "offers": [
-    {"@type": "Offer", "name": "Free", "price": "0", "priceCurrency": "HKD"},
-    {"@type": "Offer", "name": "Starter", "price": "99", "priceCurrency": "HKD"},
-    {"@type": "Offer", "name": "Growth", "price": "299", "priceCurrency": "HKD"},
-    {"@type": "Offer", "name": "Pro", "price": "599", "priceCurrency": "HKD"}
+    {"@type": "Offer", "name": "Free", "price": "0", "priceCurrency": "USD"},
+    {"@type": "Offer", "name": "Starter", "price": "9", "priceCurrency": "USD"},
+    {"@type": "Offer", "name": "Growth", "price": "19", "priceCurrency": "USD"},
+    {"@type": "Offer", "name": "Pro", "price": "49", "priceCurrency": "USD"}
   ],
   "publisher": {
     "@type": "Organization",
@@ -81,7 +81,7 @@ const T = {
       sub: "模特图 · 场景图 · 多语言文案 · 多平台尺寸 —— AI 一次出全套，免摄影外包、免翻译、免逐平台返工",
       ctaPrimary: "免费试用（5 张/月）",
       ctaSecondary: "看输出效果",
-      note: "无需绑卡 · 30 秒上手 · HK$ 99 起付费",
+      note: "无需绑卡 · 30 秒上手 · $9 起付费",
     },
     pain: {
       title: "为什么跨境卖家都在头疼这件事",
@@ -123,13 +123,13 @@ const T = {
       afterLabel: "AI 生成",
     },
     pricing: {
-      title: "为铺货卖家设计的定价",
-      sub: "HK$ 计价，月付，随时升降级或取消。Free tier 无需绑卡。",
+      title: "为个人卖家设计的美元月付定价",
+      sub: "USD 计价，月付，随时升降级或取消。Free tier 无需绑卡。",
       tiers: [
         { id: "free", name: "免费版", price: "0", suffix: "/月", tag: "试试看", features: ["5 张图/月", "限 1 个市场 + 1 个平台", "基础模特库", "社区支持"], cta: "免费试用", ctaHref: APP_LOGIN, highlight: false },
-        { id: "starter", name: "新手版", price: "99", suffix: "HK$/月", tag: "试水", features: ["50 张图/月", "5 国语言文案", "基础模特库（10 个）", "6 个平台尺寸适配", "社区支持"], cta: "订阅 Starter", ctaHref: APP_PRICING, highlight: false },
-        { id: "growth", name: "成长版", price: "299", suffix: "HK$/月", tag: "90% 卖家选择", features: ["200 张图/月", "5 国语言 + 越南语 + 韩语", "完整模特库（50 个）", "所有平台 + 自定义尺寸", "优先生成队列", "邮件支持"], cta: "订阅 Growth", ctaHref: APP_PRICING, highlight: true },
-        { id: "pro", name: "专业版", price: "599", suffix: "HK$/月", tag: "团队/代运营", features: ["500 张图/月", "12 国语言 + 自定义", "解锁高端模特", "批量上架 API（beta）", "专属客户经理"], cta: "订阅 Pro", ctaHref: APP_PRICING, highlight: false },
+        { id: "starter", name: "新手版", price: "$9", suffix: "/月", tag: "个人卖家", features: ["50 张图/月", "5 国语言文案", "基础模特库（10 个）", "6 个平台尺寸适配", "邮件支持"], cta: "订阅 Starter", ctaHref: APP_PRICING, highlight: false },
+        { id: "growth", name: "成长版", price: "$19", suffix: "/月", tag: "最受欢迎", features: ["200 张图/月", "5 国语言 + 越南语 + 韩语", "完整模特库（50 个）", "所有平台 + 自定义尺寸", "优先生成队列", "邮件支持"], cta: "订阅 Growth", ctaHref: APP_PRICING, highlight: true },
+        { id: "pro", name: "专业版", price: "$49", suffix: "/月", tag: "小店/创作者", features: ["500 张图/月", "12 国语言 + 自定义", "解锁高端模特", "批量下载", "优先邮件支持"], cta: "订阅 Pro", ctaHref: APP_PRICING, highlight: false },
       ],
     },
     faq: {
@@ -149,10 +149,12 @@ const T = {
     },
     footer: {
       copyright: "© " + new Date().getFullYear() + " Crosslify · 跨境卖家 AI 助手",
+      contact: "运营主体：Crosslify（个人经营者） · 服务所在地：中国香港 · support@crosslify.com",
       links: [
         { name: "内容", href: "/blog" },
-        { name: "服务条款", href: APP_URL + "/terms" },
-        { name: "隐私政策", href: APP_URL + "/privacy" },
+        { name: "服务条款", href: "/terms" },
+        { name: "隐私政策", href: "/privacy" },
+        { name: "退款政策", href: "/refund" },
         { name: "support@crosslify.com", href: "mailto:support@crosslify.com" },
       ],
     },
@@ -160,16 +162,16 @@ const T = {
   en: {
     nav: { features: "Features", pricing: "Pricing", faq: "FAQ", login: "Log in", cta: "Try free" },
     hero: {
-      badge: "Built for cross-border sellers · All-in-one asset generator",
+      badge: "Built for solo sellers, creators, and small online shops",
       h1a: "One product photo,",
-      h1b: "full assets for 6 markets × 6 platforms in 60 seconds",
-      sub: "Model shots · Scene shots · Multi-language copy · Multi-platform sizes — AI-generated in one go. No studio, no translator, no per-platform rework.",
+      h1b: "localized product images and listing content in 60 seconds",
+      sub: "Create product scenes, titles, descriptions, keywords, and marketplace-ready image sizes for Amazon, TikTok Shop, Etsy, eBay, Shopee, Lazada, Temu, and AliExpress.",
       ctaPrimary: "Try free (5 images / mo)",
       ctaSecondary: "See outputs",
-      note: "No credit card · 30s to start · Paid from HK$ 99",
+      note: "No credit card · 30s to start · Paid plans from $9/mo",
     },
     pain: {
-      title: "Why cross-border sellers keep losing time on this",
+      title: "Why online sellers keep losing time on content",
       sub: "Three problems the old workflow can't solve — Crosslify solves them in one shot",
       cards: [
         { icon: "💸", title: "Studio shoots are expensive", body: "US$50-300 per SKU. 50 SKUs = $30k+/year, and freelancers miss deadlines." },
@@ -208,13 +210,13 @@ const T = {
       afterLabel: "AI generated",
     },
     pricing: {
-      title: "Pricing for cross-border sellers",
-      sub: "Priced in HK$, monthly. Upgrade, downgrade or cancel any time. Free tier — no credit card.",
+      title: "Simple USD pricing for individual sellers",
+      sub: "Monthly subscriptions in USD. Upgrade, downgrade, or cancel any time. Free tier requires no credit card.",
       tiers: [
         { id: "free", name: "Free", price: "0", suffix: "/mo", tag: "Try it", features: ["5 images / month", "1 market + 1 platform", "Basic model library", "Community support"], cta: "Start free", ctaHref: APP_LOGIN, highlight: false },
-        { id: "starter", name: "Starter", price: "99", suffix: "HK$/mo", tag: "Solo seller", features: ["50 images / month", "5 languages", "Basic models (10)", "6 platforms", "Community support"], cta: "Subscribe", ctaHref: APP_PRICING, highlight: false },
-        { id: "growth", name: "Growth", price: "299", suffix: "HK$/mo", tag: "Most popular", features: ["200 images / month", "5 + Vietnamese + Korean", "Full models (50)", "All platforms + custom sizes", "Priority queue", "Email support"], cta: "Subscribe", ctaHref: APP_PRICING, highlight: true },
-        { id: "pro", name: "Pro", price: "599", suffix: "HK$/mo", tag: "Team / agency", features: ["500 images / month", "12 languages + custom", "Premium models", "Bulk listing API (beta)", "Dedicated account manager"], cta: "Subscribe", ctaHref: APP_PRICING, highlight: false },
+        { id: "starter", name: "Starter", price: "$9", suffix: "/mo", tag: "Solo seller", features: ["50 images / month", "5 languages", "Basic models (10)", "6 platforms", "Email support"], cta: "Subscribe", ctaHref: APP_PRICING, highlight: false },
+        { id: "growth", name: "Growth", price: "$19", suffix: "/mo", tag: "Most popular", features: ["200 images / month", "5 + Vietnamese + Korean", "Full models (50)", "All platforms + custom sizes", "Priority queue", "Email support"], cta: "Subscribe", ctaHref: APP_PRICING, highlight: true },
+        { id: "pro", name: "Pro", price: "$49", suffix: "/mo", tag: "Small shop", features: ["500 images / month", "12 languages + custom", "Premium models", "Bulk downloads", "Priority email support"], cta: "Subscribe", ctaHref: APP_PRICING, highlight: false },
       ],
     },
     faq: {
@@ -222,7 +224,7 @@ const T = {
       items: [
         { q: "Does the free trial require a credit card?", a: "No. Email signup only. Free tier gives 5 images / month, limited to 1 market + 1 platform." },
         { q: "What's the image quality?", a: "Powered by fal.ai nano-banana-pro. Quality is on par with hand-retouched studio shots and preserves your product's logo / colors / labels. Upload a clean original for best results." },
-        { q: "Refund policy?", a: "Full refund within 7 days of your first subscription if usage < 5 images. Email support@crosslify.com." },
+        { q: "Refund policy?", a: "First subscriptions are eligible for a refund within 7 days if usage is below 5 generated images. See the Refund Policy or email support@crosslify.com." },
         { q: "Who owns the commercial rights?", a: "You. Unlimited commercial use. You cannot resell the outputs as a template library to third parties." },
         { q: "Is my original photo safe?", a: "Stored in an encrypted Supabase bucket, auto-deleted after 30 days. Never used to train any AI model, never shown to other users." },
         { q: "How do I change plans?", a: "In-app on the Pricing page. Pro-rated difference is settled immediately." },
@@ -233,11 +235,13 @@ const T = {
       ],
     },
     footer: {
-      copyright: "© " + new Date().getFullYear() + " Crosslify · AI assistant for cross-border sellers",
+      copyright: "© " + new Date().getFullYear() + " Crosslify · AI assistant for online sellers",
+      contact: "Operator: Crosslify (individual operator) · Service location: Hong Kong · support@crosslify.com",
       links: [
         { name: "Blog", href: "/blog" },
-        { name: "Terms", href: APP_URL + "/terms" },
-        { name: "Privacy", href: APP_URL + "/privacy" },
+        { name: "Terms", href: "/terms" },
+        { name: "Privacy", href: "/privacy" },
+        { name: "Refund", href: "/refund" },
         { name: "support@crosslify.com", href: "mailto:support@crosslify.com" },
       ],
     },
@@ -575,13 +579,15 @@ function CTABand({ t }) {
 function Footer({ t }) {
   return (
     <footer className="border-t border-slate-200 bg-white">
-      <div className="max-w-7xl mx-auto px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
-        <div className="flex items-center gap-3">
+      <div className="max-w-7xl mx-auto px-6 py-8 flex flex-col lg:flex-row items-center lg:items-start justify-between gap-4 text-xs text-slate-500">
+        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-3 text-center sm:text-left">
           <Logo />
-          <span className="text-slate-400">|</span>
-          <span>{t.footer.copyright}</span>
+          <div>
+            <div>{t.footer.copyright}</div>
+            <div className="mt-1 text-slate-400">{t.footer.contact}</div>
+          </div>
         </div>
-        <div className="flex items-center gap-5">
+        <div className="flex flex-wrap items-center justify-center gap-5">
           {t.footer.links.map((l, i) => (
             <a key={i} href={l.href} className="hover:text-indigo-600 transition">{l.name}</a>
           ))}
@@ -593,7 +599,7 @@ function Footer({ t }) {
 
 // ============== App ==============
 function App() {
-  const [lang, setLang] = useState("zh");
+  const [lang, setLang] = useState("en");
   const t = T[lang];
   // 同步 <html lang>
   React.useEffect(() => {
